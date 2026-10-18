@@ -1,7 +1,6 @@
 # Rust
 /backend/target/
 **/*.rs.bk
-Cargo.lock
 
 # Python (pdf-service)
 __pycache__/
