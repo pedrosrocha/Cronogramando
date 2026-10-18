@@ -2,6 +2,7 @@ mod auth;
 mod config;
 mod db;
 mod error;
+mod llm;
 mod models;
 mod openapi;
 mod routes;
@@ -41,6 +42,8 @@ async fn main() -> anyhow::Result<()> {
     let state = AppState {
         pool,
         cfg: cfg.clone(),
+        llm: llm::build(&cfg),
+        planner: llm::build_planner(&cfg),
     };
     db::seed_admin(&state).await?;
 
@@ -52,6 +55,33 @@ async fn main() -> anyhow::Result<()> {
         .route("/auth/me", get(auth::handlers::me))
         .route("/admin/users", get(routes::admin::list_users))
         .route("/admin/users/:id", patch(routes::admin::update_user))
+        .route("/goals", post(routes::goals::create_goal).get(routes::goals::list_goals))
+        .route(
+            "/goals/:id",
+            get(routes::goals::get_goal)
+                .patch(routes::goals::update_goal)
+                .delete(routes::goals::delete_goal),
+        )
+        .route("/goals/:id/books", get(routes::goals::list_goal_books))
+        .route("/books/:id", get(routes::goals::get_book))
+        .route("/books/:id/plan", get(routes::plan::get_plan))
+        .route(
+            "/books/:id/generate-schedule",
+            post(routes::plan::generate_plan),
+        )
+        .route("/books/:id/steps", post(routes::plan::create_step))
+        .route(
+            "/steps/:id",
+            patch(routes::plan::update_step).delete(routes::plan::delete_step),
+        )
+        .route(
+            "/steps/:id/regenerate-resource",
+            post(routes::plan::regenerate_resource),
+        )
+        .route(
+            "/activities/:id/complete",
+            patch(routes::plan::complete_activity),
+        )
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(state)

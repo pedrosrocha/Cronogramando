@@ -9,6 +9,9 @@ pub struct Config {
     pub admin_email: String,
     pub admin_password: String,
     pub bind_addr: String,
+    pub nim_api_key: Option<String>,
+    #[allow(dead_code)]
+    pub nim_model: Option<String>,
 }
 
 impl Config {
@@ -21,8 +24,14 @@ impl Config {
             admin_email: env::var("ADMIN_EMAIL").unwrap_or_else(|_| "admin@cronogramando.local".into()),
             admin_password: env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "changeme123".into()),
             bind_addr: env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8000".into()),
+            nim_api_key: optional_env("NIM_API_KEY"),
+            nim_model: optional_env("NIM_MODEL"),
         }
     }
+}
+
+fn optional_env(key: &str) -> Option<String> {
+    env::var(key).ok().filter(|v| !v.trim().is_empty())
 }
 
 fn parse_i64(key: &str, default: i64) -> i64 {
