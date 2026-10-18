@@ -1,0 +1,40 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  compose-config:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose file
+        run: |
+          [ -f .env ] || cp .env.example .env
+          docker compose config
+
+  pdf-service-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Compile check
+        run: python3 -m compileall pdf-service
+
+  backend-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: backend
+      - name: cargo check
+        working-directory: backend
+        run: cargo check --locked
+
+  # Placeholder job — enabled once the Flutter toolchain lands in CI.
+  # mobile-analyze: see docs/phases/00-project-setup.md
