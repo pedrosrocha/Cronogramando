@@ -12,6 +12,9 @@ pub struct Config {
     pub nim_api_key: Option<String>,
     #[allow(dead_code)]
     pub nim_model: Option<String>,
+    pub youtube_api_key: Option<String>,
+    pub youtube_daily_units: i64,
+    pub connector_timeout_secs: u64,
 }
 
 impl Config {
@@ -21,11 +24,15 @@ impl Config {
             jwt_secret: env::var("JWT_SECRET").expect("JWT_SECRET must be set"),
             access_token_ttl_secs: parse_i64("ACCESS_TOKEN_TTL_SECS", 900),
             refresh_token_ttl_secs: parse_i64("REFRESH_TOKEN_TTL_SECS", 60 * 60 * 24 * 30),
-            admin_email: env::var("ADMIN_EMAIL").unwrap_or_else(|_| "admin@cronogramando.local".into()),
+            admin_email: env::var("ADMIN_EMAIL")
+                .unwrap_or_else(|_| "admin@cronogramando.local".into()),
             admin_password: env::var("ADMIN_PASSWORD").unwrap_or_else(|_| "changeme123".into()),
             bind_addr: env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8000".into()),
             nim_api_key: optional_env("NIM_API_KEY"),
             nim_model: optional_env("NIM_MODEL"),
+            youtube_api_key: optional_env("YOUTUBE_API_KEY"),
+            youtube_daily_units: parse_i64("YOUTUBE_DAILY_UNITS", 10_000),
+            connector_timeout_secs: parse_i64("CONNECTOR_TIMEOUT_SECS", 5).max(1) as u64,
         }
     }
 }

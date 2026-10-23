@@ -118,7 +118,10 @@ pub async fn register(
         .fetch_one(&state.pool)
         .await?;
 
-    Ok((StatusCode::CREATED, Json(build_auth_response(&state, user)?)))
+    Ok((
+        StatusCode::CREATED,
+        Json(build_auth_response(&state, user)?),
+    ))
 }
 
 #[utoipa::path(

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -9,6 +11,7 @@ use uuid::Uuid;
 
 use crate::{
     auth::extractor::AuthUser,
+    content::{step_query, types::ResolveRequest},
     error::AppError,
     llm::PlanRequest,
     models::{
@@ -25,7 +28,7 @@ const BOOK_COLUMNS: &str = "id, goal_id, order_index, title, description, status
 const STEP_COLUMNS: &str = "id, book_id, order_index, title, activity_kind, \
      estimated_duration_mins, references_step_id, created_at, updated_at";
 const ACTIVITY_COLUMNS: &str = "id, step_id, type, resource_url, embed_id, \
-     source_connector, language, completed, created_at, updated_at";
+     source_connector, source_category, language, completed, created_at, updated_at";
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateActivityRequest {
@@ -34,6 +37,7 @@ pub struct CreateActivityRequest {
     pub resource_url: Option<String>,
     pub embed_id: Option<String>,
     pub source_connector: Option<String>,
+    pub source_category: Option<String>,
     pub language: Option<String>,
 }
 
@@ -75,6 +79,15 @@ fn valid_type(activity_type: &str) -> bool {
         activity_type,
         "video" | "podcast" | "pdf" | "article" | "quiz" | "task"
     )
+}
+
+async fn preferred_language(state: &AppState, user_id: Uuid) -> Result<String, AppError> {
+    let language: Option<String> =
+        sqlx::query_scalar("SELECT preferred_language FROM users WHERE id = $1")
+            .bind(user_id)
+            .fetch_optional(&state.pool)
+            .await?;
+    Ok(language.unwrap_or_else(|| "pt-BR".to_string()))
 }
 
 async fn load_book(state: &AppState, id: Uuid, auth: &AuthUser) -> Result<Book, AppError> {
@@ -128,9 +141,8 @@ async fn load_steps(state: &AppState, book_id: Uuid) -> Result<Vec<Step>, AppErr
 }
 
 async fn load_activities(state: &AppState, step_id: Uuid) -> Result<Vec<Activity>, AppError> {
-    let sql = format!(
-        "SELECT {ACTIVITY_COLUMNS} FROM activities WHERE step_id = $1 ORDER BY created_at"
-    );
+    let sql =
+        format!("SELECT {ACTIVITY_COLUMNS} FROM activities WHERE step_id = $1 ORDER BY created_at");
     let activities = sqlx::query_as::<_, Activity>(&sql)
         .bind(step_id)
         .fetch_all(&state.pool)
@@ -262,18 +274,66 @@ pub async fn generate_plan(
         ));
     }
 
-    let drafts = state
+    let language = preferred_language(&state, auth.id).await?;
+    let mut drafts = state
         .planner
         .plan(&PlanRequest {
             book_title: book.title.clone(),
             planned_duration_mins: book.planned_duration_mins,
-            preferred_language: "pt-BR".to_string(),
+            preferred_language: language.clone(),
         })
         .await
         .map_err(|e| {
             tracing::error!(error = %e, "plan generation failed");
             AppError::Internal("plan generation failed".into())
         })?;
+
+    let mut resolved_cache: HashMap<String, Option<crate::content::types::ResourceCandidate>> =
+        HashMap::new();
+    for draft in &mut drafts {
+        draft.activity.language = language.clone();
+        if !matches!(
+            draft.activity.activity_type.as_str(),
+            "video" | "pdf" | "article" | "podcast"
+        ) {
+            continue;
+        }
+
+        let query = step_query(&book.title, &draft.title);
+        let candidate = if let Some(cached) = resolved_cache.get(&query) {
+            cached.clone()
+        } else {
+            let resolved = state
+                .resolver
+                .resolve(&ResolveRequest {
+                    query: query.clone(),
+                    language: language.clone(),
+                })
+                .await;
+            if resolved.used_fallback {
+                tracing::info!(
+                    category = resolved.category.as_str(),
+                    query = %query,
+                    "resource resolution used the curated fallback"
+                );
+            }
+            let candidate = resolved.candidates.first().cloned();
+            resolved_cache.insert(query, candidate.clone());
+            candidate
+        };
+
+        if let Some(candidate) = candidate {
+            draft.activity.activity_type = candidate.activity_type.clone();
+            draft.activity.resource_url = candidate.url;
+            draft.activity.embed_id = candidate.embed_id;
+            draft.activity.source_connector = Some(candidate.connector.as_str().to_string());
+            draft.activity.source_category = Some(candidate.category.as_str().to_string());
+            draft.activity.language = candidate.language;
+            if candidate.activity_type == "task" {
+                draft.activity_kind = "task".to_string();
+            }
+        }
+    }
 
     let mut tx = state.pool.begin().await?;
     let mut ids: Vec<Uuid> = Vec::with_capacity(drafts.len());
@@ -298,14 +358,15 @@ pub async fn generate_plan(
             .await?;
 
         sqlx::query(
-            "INSERT INTO activities (step_id, type, resource_url, embed_id, source_connector, language) \
-             VALUES ($1, $2, $3, $4, $5, $6)",
+            "INSERT INTO activities (step_id, type, resource_url, embed_id, source_connector, \
+             source_category, language) VALUES ($1, $2, $3, $4, $5, $6, $7)",
         )
         .bind(step.id)
         .bind(&draft.activity.activity_type)
         .bind(&draft.activity.resource_url)
         .bind(&draft.activity.embed_id)
         .bind(&draft.activity.source_connector)
+        .bind(&draft.activity.source_category)
         .bind(&draft.activity.language)
         .execute(&mut *tx)
         .await?;
@@ -319,7 +380,10 @@ pub async fn generate_plan(
         .await?;
     tx.commit().await?;
 
-    Ok((StatusCode::CREATED, Json(build_book_plan(&state, book.id).await?)))
+    Ok((
+        StatusCode::CREATED,
+        Json(build_book_plan(&state, book.id).await?),
+    ))
 }
 
 #[utoipa::path(
@@ -370,11 +434,12 @@ pub async fn create_step(
         }
     }
 
-    let next_index: i32 =
-        sqlx::query_scalar("SELECT COALESCE(MAX(order_index) + 1, 0) FROM steps WHERE book_id = $1")
-            .bind(book.id)
-            .fetch_one(&state.pool)
-            .await?;
+    let next_index: i32 = sqlx::query_scalar(
+        "SELECT COALESCE(MAX(order_index) + 1, 0) FROM steps WHERE book_id = $1",
+    )
+    .bind(book.id)
+    .fetch_one(&state.pool)
+    .await?;
 
     let mut tx = state.pool.begin().await?;
     let sql = format!(
@@ -393,15 +458,21 @@ pub async fn create_step(
 
     if let Some(activity) = &payload.activity {
         sqlx::query(
-            "INSERT INTO activities (step_id, type, resource_url, embed_id, source_connector, language) \
-             VALUES ($1, $2, $3, $4, $5, $6)",
+            "INSERT INTO activities (step_id, type, resource_url, embed_id, source_connector, \
+             source_category, language) VALUES ($1, $2, $3, $4, $5, $6, $7)",
         )
         .bind(step.id)
         .bind(&activity.activity_type)
         .bind(&activity.resource_url)
         .bind(&activity.embed_id)
         .bind(&activity.source_connector)
-        .bind(activity.language.clone().unwrap_or_else(|| "pt-BR".to_string()))
+        .bind(&activity.source_category)
+        .bind(
+            activity
+                .language
+                .clone()
+                .unwrap_or_else(|| "pt-BR".to_string()),
+        )
         .execute(&mut *tx)
         .await?;
     }
@@ -539,52 +610,79 @@ pub async fn regenerate_resource(
     auth: AuthUser,
     Path(step_id): Path<Uuid>,
 ) -> Result<Json<StepResponse>, AppError> {
-    let (step, _book) = load_step_owned(&state, step_id, &auth).await?;
+    let (step, book) = load_step_owned(&state, step_id, &auth).await?;
+    let language = preferred_language(&state, auth.id).await?;
+    let query = step_query(&book.title, &step.title);
+    let resolved = state
+        .resolver
+        .resolve(&ResolveRequest {
+            query,
+            language: language.clone(),
+        })
+        .await;
 
-    const CYCLE: [&str; 6] = ["video", "pdf", "article", "podcast", "quiz", "task"];
     let existing = load_activities(&state, step.id).await?;
+    let current_url = existing
+        .first()
+        .and_then(|activity| activity.resource_url.as_deref());
+    let candidate = resolved
+        .candidates
+        .iter()
+        .find(|candidate| candidate.url.as_deref() != current_url)
+        .or_else(|| resolved.candidates.first())
+        .ok_or_else(|| AppError::Internal("no resource candidate available".into()))?;
 
-    match existing.into_iter().next() {
+    let mut activity_kind = step.activity_kind.clone();
+    if candidate.activity_type == "task" {
+        activity_kind = "task".to_string();
+    }
+    if activity_kind != step.activity_kind {
+        sqlx::query("UPDATE steps SET activity_kind = $2, updated_at = now() WHERE id = $1")
+            .bind(step.id)
+            .bind(&activity_kind)
+            .execute(&state.pool)
+            .await?;
+    }
+
+    match existing.first() {
         Some(activity) => {
-            let current = CYCLE
-                .iter()
-                .position(|t| *t == activity.activity_type)
-                .unwrap_or(0);
-            let next_type = CYCLE[(current + 1) % CYCLE.len()];
-            let url = if next_type == "quiz" || next_type == "task" {
-                None
-            } else {
-                Some(format!(
-                    "https://placeholder.cronogramando.local/regenerated-{}",
-                    Uuid::new_v4()
-                ))
-            };
             sqlx::query(
-                "UPDATE activities SET type = $2, resource_url = $3, \
-                 source_connector = 'placeholder', updated_at = now() WHERE id = $1",
+                "UPDATE activities SET type = $2, resource_url = $3, embed_id = $4, \
+                 source_connector = $5, source_category = $6, language = $7, updated_at = now() \
+                 WHERE id = $1",
             )
             .bind(activity.id)
-            .bind(next_type)
-            .bind(&url)
+            .bind(&candidate.activity_type)
+            .bind(&candidate.url)
+            .bind(&candidate.embed_id)
+            .bind(candidate.connector.as_str())
+            .bind(candidate.category.as_str())
+            .bind(&candidate.language)
             .execute(&state.pool)
             .await?;
         }
         None => {
-            let url = format!(
-                "https://placeholder.cronogramando.local/regenerated-{}",
-                Uuid::new_v4()
-            );
             sqlx::query(
-                "INSERT INTO activities (step_id, type, resource_url, source_connector, language) \
-                 VALUES ($1, 'video', $2, 'placeholder', 'pt-BR')",
+                "INSERT INTO activities (step_id, type, resource_url, embed_id, source_connector, \
+                 source_category, language) VALUES ($1, $2, $3, $4, $5, $6, $7)",
             )
             .bind(step.id)
-            .bind(&url)
+            .bind(&candidate.activity_type)
+            .bind(&candidate.url)
+            .bind(&candidate.embed_id)
+            .bind(candidate.connector.as_str())
+            .bind(candidate.category.as_str())
+            .bind(&candidate.language)
             .execute(&state.pool)
             .await?;
         }
     }
 
+    let sql = format!("SELECT {STEP_COLUMNS} FROM steps WHERE id = $1");
+    let step = sqlx::query_as::<_, Step>(&sql)
+        .bind(step.id)
+        .fetch_one(&state.pool)
+        .await?;
     let activities = load_activities(&state, step.id).await?;
     Ok(Json(step_response(step, activities)))
 }

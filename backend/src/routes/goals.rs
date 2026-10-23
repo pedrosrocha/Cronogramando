@@ -49,7 +49,11 @@ fn capacity_minutes(availability: &Availability, horizon_days: i64) -> i32 {
     total.max(30) as i32
 }
 
-pub(crate) async fn load_goal(state: &AppState, id: Uuid, auth: &AuthUser) -> Result<Goal, AppError> {
+pub(crate) async fn load_goal(
+    state: &AppState,
+    id: Uuid,
+    auth: &AuthUser,
+) -> Result<Goal, AppError> {
     let sql = format!("SELECT {GOAL_COLUMNS} FROM goals WHERE id = $1");
     let goal = sqlx::query_as::<_, Goal>(&sql)
         .bind(id)
@@ -58,7 +62,9 @@ pub(crate) async fn load_goal(state: &AppState, id: Uuid, auth: &AuthUser) -> Re
         .ok_or_else(|| AppError::NotFound("goal not found".into()))?;
 
     if goal.user_id != auth.id && !auth.is_admin() {
-        return Err(AppError::Forbidden("not allowed to access this goal".into()));
+        return Err(AppError::Forbidden(
+            "not allowed to access this goal".into(),
+        ));
     }
     Ok(goal)
 }
@@ -110,7 +116,9 @@ pub async fn create_goal(
 
     let today = Utc::now().date_naive();
     if payload.deadline <= today {
-        return Err(AppError::BadRequest("deadline must be in the future".into()));
+        return Err(AppError::BadRequest(
+            "deadline must be in the future".into(),
+        ));
     }
 
     let target_deadline = payload.target_deadline.unwrap_or(payload.deadline);
@@ -193,7 +201,8 @@ pub async fn list_goals(
     State(state): State<AppState>,
     auth: AuthUser,
 ) -> Result<Json<Vec<GoalResponse>>, AppError> {
-    let sql = format!("SELECT {GOAL_COLUMNS} FROM goals WHERE user_id = $1 ORDER BY created_at DESC");
+    let sql =
+        format!("SELECT {GOAL_COLUMNS} FROM goals WHERE user_id = $1 ORDER BY created_at DESC");
     let goals = sqlx::query_as::<_, Goal>(&sql)
         .bind(auth.id)
         .fetch_all(&state.pool)

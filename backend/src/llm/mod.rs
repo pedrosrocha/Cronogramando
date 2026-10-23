@@ -42,6 +42,7 @@ pub struct ActivityDraft {
     pub resource_url: Option<String>,
     pub embed_id: Option<String>,
     pub source_connector: Option<String>,
+    pub source_category: Option<String>,
     pub language: String,
 }
 

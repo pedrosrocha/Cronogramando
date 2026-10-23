@@ -54,6 +54,7 @@ impl BookPlanner for MockBookPlanner {
                         resource_url: Some(placeholder_url(title, i)),
                         embed_id: None,
                         source_connector: Some("placeholder".to_string()),
+                        source_category: None,
                         language: language.clone(),
                     },
                 });
@@ -69,6 +70,7 @@ impl BookPlanner for MockBookPlanner {
                         resource_url: None,
                         embed_id: None,
                         source_connector: Some("placeholder".to_string()),
+                        source_category: None,
                         language: language.clone(),
                     },
                 });
@@ -96,6 +98,7 @@ impl BookPlanner for MockBookPlanner {
                         resource_url,
                         embed_id: None,
                         source_connector: Some("placeholder".to_string()),
+                        source_category: None,
                         language: language.clone(),
                     },
                 });

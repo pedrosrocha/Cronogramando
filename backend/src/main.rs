@@ -1,5 +1,6 @@
 mod auth;
 mod config;
+mod content;
 mod db;
 mod error;
 mod llm;
@@ -39,11 +40,13 @@ async fn main() -> anyhow::Result<()> {
         .await?;
     db::run_migrations(&pool).await?;
 
+    let resolver = content::build_resolver(&cfg, pool.clone())?;
     let state = AppState {
         pool,
         cfg: cfg.clone(),
         llm: llm::build(&cfg),
         planner: llm::build_planner(&cfg),
+        resolver,
     };
     db::seed_admin(&state).await?;
 
@@ -55,7 +58,10 @@ async fn main() -> anyhow::Result<()> {
         .route("/auth/me", get(auth::handlers::me))
         .route("/admin/users", get(routes::admin::list_users))
         .route("/admin/users/:id", patch(routes::admin::update_user))
-        .route("/goals", post(routes::goals::create_goal).get(routes::goals::list_goals))
+        .route(
+            "/goals",
+            post(routes::goals::create_goal).get(routes::goals::list_goals),
+        )
         .route(
             "/goals/:id",
             get(routes::goals::get_goal)
