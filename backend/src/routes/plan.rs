@@ -380,6 +380,8 @@ pub async fn generate_plan(
         .await?;
     tx.commit().await?;
 
+    crate::routes::schedule::schedule_pending_goal(&state, book.goal_id).await?;
+
     Ok((
         StatusCode::CREATED,
         Json(build_book_plan(&state, book.id).await?),
@@ -477,6 +479,8 @@ pub async fn create_step(
         .await?;
     }
     tx.commit().await?;
+
+    crate::routes::schedule::schedule_pending_goal(&state, book.goal_id).await?;
 
     let activities = load_activities(&state, step.id).await?;
     Ok((StatusCode::CREATED, Json(step_response(step, activities))))

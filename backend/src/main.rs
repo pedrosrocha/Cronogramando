@@ -7,6 +7,7 @@ mod llm;
 mod models;
 mod openapi;
 mod routes;
+mod scheduler;
 mod state;
 
 use std::sync::Arc;
@@ -88,6 +89,8 @@ async fn main() -> anyhow::Result<()> {
             "/activities/:id/complete",
             patch(routes::plan::complete_activity),
         )
+        .route("/schedule", get(routes::schedule::list_schedule))
+        .route("/schedule/:slot_id", patch(routes::schedule::move_slot))
         .layer(TraceLayer::new_for_http())
         .layer(CorsLayer::permissive())
         .with_state(state)

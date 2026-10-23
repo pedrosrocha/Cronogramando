@@ -6,6 +6,7 @@ use crate::error::ErrorResponse;
 use crate::models::activity::ActivityResponse;
 use crate::models::book::BookResponse;
 use crate::models::goal::{Availability, GoalResponse};
+use crate::models::schedule::ScheduleSlotResponse;
 use crate::models::step::StepResponse;
 use crate::models::user::UserResponse;
 use crate::routes::admin::UpdateUserRequest;
@@ -14,6 +15,7 @@ use crate::routes::plan::{
     BookPlanResponse, CompleteActivityRequest, CreateActivityRequest, CreateStepRequest,
     UpdateStepRequest,
 };
+use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
 
 #[derive(OpenApi)]
 #[openapi(
@@ -39,6 +41,8 @@ use crate::routes::plan::{
         crate::routes::plan::delete_step,
         crate::routes::plan::regenerate_resource,
         crate::routes::plan::complete_activity,
+        crate::routes::schedule::list_schedule,
+        crate::routes::schedule::move_slot,
     ),
     components(schemas(
         RegisterRequest,
@@ -59,6 +63,9 @@ use crate::routes::plan::{
         StepResponse,
         ActivityResponse,
         BookPlanResponse,
+        ScheduleQuery,
+        MoveSlotRequest,
+        ScheduleSlotResponse,
         ErrorResponse,
     )),
     modifiers(&SecurityAddon),
@@ -67,6 +74,7 @@ use crate::routes::plan::{
         (name = "admin", description = "Administrative operations"),
         (name = "goals", description = "Goals and their decomposed books"),
         (name = "plan", description = "Per-book plans: steps and activities"),
+        (name = "schedule", description = "Calendar slots, allocation and move/re-fit"),
         (name = "system", description = "Service health"),
     )
 )]
