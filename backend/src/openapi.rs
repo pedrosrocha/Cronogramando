@@ -15,6 +15,9 @@ use crate::routes::plan::{
     BookPlanResponse, CompleteActivityRequest, CreateActivityRequest, CreateStepRequest,
     UpdateStepRequest,
 };
+use crate::routes::reconciliation::{
+    CompleteBookResponse, ReconcileDeadlineRequest, ReconcileDeadlineResponse, ReconciliationState,
+};
 use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
 
 #[derive(OpenApi)]
@@ -34,6 +37,8 @@ use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
         crate::routes::goals::delete_goal,
         crate::routes::goals::list_goal_books,
         crate::routes::goals::get_book,
+        crate::routes::reconciliation::complete_book,
+        crate::routes::reconciliation::reconcile_deadline,
         crate::routes::plan::get_plan,
         crate::routes::plan::generate_plan,
         crate::routes::plan::create_step,
@@ -66,6 +71,10 @@ use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
         ScheduleQuery,
         MoveSlotRequest,
         ScheduleSlotResponse,
+        ReconciliationState,
+        CompleteBookResponse,
+        ReconcileDeadlineRequest,
+        ReconcileDeadlineResponse,
         ErrorResponse,
     )),
     modifiers(&SecurityAddon),
@@ -74,6 +83,7 @@ use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
         (name = "admin", description = "Administrative operations"),
         (name = "goals", description = "Goals and their decomposed books"),
         (name = "plan", description = "Per-book plans: steps and activities"),
+        (name = "reconciliation", description = "Book completion and deadline reconciliation"),
         (name = "schedule", description = "Calendar slots, allocation and move/re-fit"),
         (name = "system", description = "Service health"),
     )

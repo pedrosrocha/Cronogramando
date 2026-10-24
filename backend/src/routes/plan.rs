@@ -16,15 +16,13 @@ use crate::{
     llm::PlanRequest,
     models::{
         activity::{Activity, ActivityResponse},
-        book::{Book, BookResponse},
+        book::{Book, BookResponse, BOOK_COLUMNS},
         step::{Step, StepResponse},
     },
     routes::goals,
     state::AppState,
 };
 
-const BOOK_COLUMNS: &str = "id, goal_id, order_index, title, description, status, \
-     planned_duration_mins, min_duration_mins, actual_duration_mins, created_at, updated_at";
 const STEP_COLUMNS: &str = "id, book_id, order_index, title, activity_kind, \
      estimated_duration_mins, references_step_id, created_at, updated_at";
 const ACTIVITY_COLUMNS: &str = "id, step_id, type, resource_url, embed_id, \
@@ -90,7 +88,11 @@ async fn preferred_language(state: &AppState, user_id: Uuid) -> Result<String, A
     Ok(language.unwrap_or_else(|| "pt-BR".to_string()))
 }
 
-async fn load_book(state: &AppState, id: Uuid, auth: &AuthUser) -> Result<Book, AppError> {
+pub(crate) async fn load_book(
+    state: &AppState,
+    id: Uuid,
+    auth: &AuthUser,
+) -> Result<Book, AppError> {
     let sql = format!("SELECT {BOOK_COLUMNS} FROM books WHERE id = $1");
     let book = sqlx::query_as::<_, Book>(&sql)
         .bind(id)
@@ -263,6 +265,21 @@ pub async fn generate_plan(
     Path(book_id): Path<Uuid>,
 ) -> Result<(StatusCode, Json<BookPlanResponse>), AppError> {
     let book = load_book(&state, book_id, &auth).await?;
+
+    let pending_reconciliation: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM books done \
+         JOIN books b ON b.goal_id = done.goal_id \
+         WHERE b.id = $1 AND done.order_index < b.order_index \
+           AND done.status = 'completed' AND done.reconciliation_status = 'pending'",
+    )
+    .bind(book.id)
+    .fetch_one(&state.pool)
+    .await?;
+    if pending_reconciliation > 0 {
+        return Err(AppError::Conflict(
+            "reconcile the previous book's deadline before generating this plan".into(),
+        ));
+    }
 
     let existing: i64 = sqlx::query_scalar("SELECT count(*) FROM steps WHERE book_id = $1")
         .bind(book.id)

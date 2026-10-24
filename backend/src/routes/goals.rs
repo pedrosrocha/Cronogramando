@@ -14,7 +14,7 @@ use crate::{
     error::AppError,
     llm::{BookDraft, DecomposeRequest},
     models::{
-        book::{Book, BookResponse},
+        book::{Book, BookResponse, BOOK_COLUMNS},
         goal::{Availability, Goal, GoalResponse},
     },
     state::AppState,
@@ -22,8 +22,6 @@ use crate::{
 
 const GOAL_COLUMNS: &str = "id, user_id, title, why_statement, deadline, target_deadline, \
      availability, created_at, updated_at";
-const BOOK_COLUMNS: &str = "id, goal_id, order_index, title, description, status, \
-     planned_duration_mins, min_duration_mins, actual_duration_mins, created_at, updated_at";
 
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct CreateGoalRequest {

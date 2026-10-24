@@ -6,6 +6,7 @@ mod error;
 mod llm;
 mod models;
 mod openapi;
+mod reconciliation;
 mod routes;
 mod scheduler;
 mod state;
@@ -71,6 +72,14 @@ async fn main() -> anyhow::Result<()> {
         )
         .route("/goals/:id/books", get(routes::goals::list_goal_books))
         .route("/books/:id", get(routes::goals::get_book))
+        .route(
+            "/books/:id/complete",
+            post(routes::reconciliation::complete_book),
+        )
+        .route(
+            "/books/:id/reconcile-deadline",
+            post(routes::reconciliation::reconcile_deadline),
+        )
         .route("/books/:id/plan", get(routes::plan::get_plan))
         .route(
             "/books/:id/generate-schedule",
