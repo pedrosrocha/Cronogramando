@@ -312,6 +312,9 @@ path-based triggers; Docker Compose sits naturally at the root.
   resolution at scale — fine for a prototype/demo, worth monitoring.
 - Formula-detection heuristic in the PDF pipeline is inherently imperfect
   — mitigated by the raw-PDF toggle, not by trying to perfect detection.
+- PDF extraction fetches user-supplied activity URLs. The sidecar should stay
+  on a private network, and a production deployment should add an SSRF guard
+  (scheme/allowlist or private-IP rejection) before exposing the backend.
 - Rust is being learned alongside this project — budget more time than a
   familiar-stack estimate would suggest.
 - Content curation quality (matching a step to a genuinely good resource)

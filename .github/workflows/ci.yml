@@ -23,6 +23,9 @@ jobs:
           python-version: "3.13"
       - name: Compile check
         run: python3 -m compileall pdf-service
+      - name: Unit tests
+        working-directory: pdf-service
+        run: python3 -m unittest discover -s tests -v
 
   backend-check:
     runs-on: ubuntu-latest

@@ -79,7 +79,10 @@ fn valid_type(activity_type: &str) -> bool {
     )
 }
 
-async fn preferred_language(state: &AppState, user_id: Uuid) -> Result<String, AppError> {
+pub(crate) async fn preferred_language(
+    state: &AppState,
+    user_id: Uuid,
+) -> Result<String, AppError> {
     let language: Option<String> =
         sqlx::query_scalar("SELECT preferred_language FROM users WHERE id = $1")
             .bind(user_id)
@@ -118,7 +121,7 @@ async fn load_step_owned(
     Ok((step, book))
 }
 
-async fn load_activity_owned(
+pub(crate) async fn load_activity_owned(
     state: &AppState,
     id: Uuid,
     auth: &AuthUser,

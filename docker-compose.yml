@@ -18,14 +18,20 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
+      PDF_SERVICE_URL: http://pdf-service:8001
     ports:
       - "8000:8000"
     depends_on:
       - postgres
+      - pdf-service
 
   pdf-service:
     build: ./pdf-service
     restart: unless-stopped
+    environment:
+      PDF_MAX_BYTES: ${PDF_MAX_BYTES:-67108864}
+      PDF_TABLE_DETECTION: ${PDF_TABLE_DETECTION:-auto}
+      PDF_TABLE_FINDER_MAX_PAGES: ${PDF_TABLE_FINDER_MAX_PAGES:-20}
     ports:
       - "8001:8001"
 

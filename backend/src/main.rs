@@ -6,6 +6,7 @@ mod error;
 mod llm;
 mod models;
 mod openapi;
+mod pdf;
 mod reconciliation;
 mod routes;
 mod scheduler;
@@ -43,12 +44,15 @@ async fn main() -> anyhow::Result<()> {
     db::run_migrations(&pool).await?;
 
     let resolver = content::build_resolver(&cfg, pool.clone())?;
+    let pdf = pdf::build(&cfg)?;
     let state = AppState {
         pool,
         cfg: cfg.clone(),
         llm: llm::build(&cfg),
         planner: llm::build_planner(&cfg),
         resolver,
+        pdf,
+        translator: llm::build_translator(&cfg),
     };
     db::seed_admin(&state).await?;
 
@@ -97,6 +101,11 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/activities/:id/complete",
             patch(routes::plan::complete_activity),
+        )
+        .route("/activities/:id/content", get(routes::pdf::get_content))
+        .route(
+            "/activities/:id/translation",
+            get(routes::pdf::get_translation),
         )
         .route("/schedule", get(routes::schedule::list_schedule))
         .route("/schedule/:slot_id", patch(routes::schedule::move_slot))

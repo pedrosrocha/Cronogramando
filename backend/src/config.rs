@@ -10,11 +10,15 @@ pub struct Config {
     pub admin_password: String,
     pub bind_addr: String,
     pub nim_api_key: Option<String>,
-    #[allow(dead_code)]
     pub nim_model: Option<String>,
+    pub nim_base_url: String,
+    pub nim_timeout_secs: u64,
     pub youtube_api_key: Option<String>,
     pub youtube_daily_units: i64,
     pub connector_timeout_secs: u64,
+    pub pdf_service_url: String,
+    pub pdf_service_timeout_secs: u64,
+    pub pdf_max_bytes: usize,
 }
 
 impl Config {
@@ -30,9 +34,16 @@ impl Config {
             bind_addr: env::var("BIND_ADDR").unwrap_or_else(|_| "0.0.0.0:8000".into()),
             nim_api_key: optional_env("NIM_API_KEY"),
             nim_model: optional_env("NIM_MODEL"),
+            nim_base_url: optional_env("NIM_BASE_URL")
+                .unwrap_or_else(|| "https://integrate.api.nvidia.com/v1".into()),
+            nim_timeout_secs: parse_i64("NIM_TIMEOUT_SECS", 60).max(5) as u64,
             youtube_api_key: optional_env("YOUTUBE_API_KEY"),
             youtube_daily_units: parse_i64("YOUTUBE_DAILY_UNITS", 10_000),
             connector_timeout_secs: parse_i64("CONNECTOR_TIMEOUT_SECS", 5).max(1) as u64,
+            pdf_service_url: optional_env("PDF_SERVICE_URL")
+                .unwrap_or_else(|| "http://localhost:8001".into()),
+            pdf_service_timeout_secs: parse_i64("PDF_SERVICE_TIMEOUT_SECS", 180).max(5) as u64,
+            pdf_max_bytes: parse_i64("PDF_MAX_BYTES", 64 * 1024 * 1024).max(1) as usize,
         }
     }
 }

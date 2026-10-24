@@ -6,6 +6,7 @@ use crate::config::Config;
 
 pub mod mock;
 pub mod plan;
+pub mod translator;
 
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -72,4 +73,19 @@ pub fn build_planner(cfg: &Config) -> Arc<dyn BookPlanner> {
         tracing::info!("NIM_API_KEY not set; using mock book planner");
     }
     Arc::new(plan::MockBookPlanner::new())
+}
+
+pub fn build_translator(cfg: &Config) -> Arc<dyn translator::Translator> {
+    if cfg.nim_api_key.as_deref().unwrap_or("").is_empty() {
+        tracing::info!("NIM_API_KEY not set; using identity translation mock");
+        return Arc::new(translator::MockTranslator);
+    }
+
+    match translator::NimTranslator::new(cfg) {
+        Ok(nim) => Arc::new(nim),
+        Err(error) => {
+            tracing::warn!(%error, "NIM translator unavailable; using identity mock");
+            Arc::new(translator::MockTranslator)
+        }
+    }
 }

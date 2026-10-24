@@ -6,11 +6,13 @@ use crate::error::ErrorResponse;
 use crate::models::activity::ActivityResponse;
 use crate::models::book::BookResponse;
 use crate::models::goal::{Availability, GoalResponse};
+use crate::models::pdf::PdfBlock;
 use crate::models::schedule::ScheduleSlotResponse;
 use crate::models::step::StepResponse;
 use crate::models::user::UserResponse;
 use crate::routes::admin::UpdateUserRequest;
 use crate::routes::goals::{CreateGoalRequest, UpdateGoalRequest};
+use crate::routes::pdf::{PdfContentResponse, PdfTranslationResponse, TranslationQuery};
 use crate::routes::plan::{
     BookPlanResponse, CompleteActivityRequest, CreateActivityRequest, CreateStepRequest,
     UpdateStepRequest,
@@ -46,6 +48,8 @@ use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
         crate::routes::plan::delete_step,
         crate::routes::plan::regenerate_resource,
         crate::routes::plan::complete_activity,
+        crate::routes::pdf::get_content,
+        crate::routes::pdf::get_translation,
         crate::routes::schedule::list_schedule,
         crate::routes::schedule::move_slot,
     ),
@@ -68,6 +72,10 @@ use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
         StepResponse,
         ActivityResponse,
         BookPlanResponse,
+        PdfBlock,
+        PdfContentResponse,
+        PdfTranslationResponse,
+        TranslationQuery,
         ScheduleQuery,
         MoveSlotRequest,
         ScheduleSlotResponse,
@@ -84,6 +92,7 @@ use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
         (name = "goals", description = "Goals and their decomposed books"),
         (name = "plan", description = "Per-book plans: steps and activities"),
         (name = "reconciliation", description = "Book completion and deadline reconciliation"),
+        (name = "pdf", description = "PDF extraction, Markdown reflow and cached translation"),
         (name = "schedule", description = "Calendar slots, allocation and move/re-fit"),
         (name = "system", description = "Service health"),
     )
