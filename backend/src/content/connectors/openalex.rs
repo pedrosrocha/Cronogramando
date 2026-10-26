@@ -67,6 +67,11 @@ fn parse_response(response: &Value, category: SourceCategory) -> Vec<ResourceCan
                 language,
                 activity_type: "article".to_string(),
                 category,
+                description: None,
+                excerpt: None,
+                duration_secs: None,
+                page_count: None,
+                score: 0,
             })
         })
         .collect()

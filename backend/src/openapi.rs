@@ -11,11 +11,13 @@ use crate::models::schedule::ScheduleSlotResponse;
 use crate::models::step::StepResponse;
 use crate::models::user::UserResponse;
 use crate::routes::admin::UpdateUserRequest;
-use crate::routes::goals::{CreateGoalRequest, UpdateGoalRequest};
+use crate::routes::goals::{
+    CreateGoalRequest, RedecomposeGoalRequest, UpdateBookRequest, UpdateGoalRequest,
+};
 use crate::routes::pdf::{PdfContentResponse, PdfTranslationResponse, TranslationQuery};
 use crate::routes::plan::{
     BookPlanResponse, CompleteActivityRequest, CreateActivityRequest, CreateStepRequest,
-    UpdateStepRequest,
+    FeedbackRequest, UpdateStepRequest,
 };
 use crate::routes::reconciliation::{
     CompleteBookResponse, ReconcileDeadlineRequest, ReconcileDeadlineResponse, ReconciliationState,
@@ -39,6 +41,8 @@ use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
         crate::routes::goals::delete_goal,
         crate::routes::goals::list_goal_books,
         crate::routes::goals::get_book,
+        crate::routes::goals::update_book,
+        crate::routes::goals::redecompose_goal,
         crate::routes::reconciliation::complete_book,
         crate::routes::reconciliation::reconcile_deadline,
         crate::routes::plan::get_plan,
@@ -47,6 +51,10 @@ use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
         crate::routes::plan::update_step,
         crate::routes::plan::delete_step,
         crate::routes::plan::regenerate_resource,
+        crate::routes::plan::generate_lesson,
+        crate::routes::plan::activity_feedback,
+        crate::routes::plan::activity_trace,
+        crate::routes::plan::get_activity,
         crate::routes::plan::complete_activity,
         crate::routes::pdf::get_content,
         crate::routes::pdf::get_translation,
@@ -63,12 +71,15 @@ use crate::routes::schedule::{MoveSlotRequest, ScheduleQuery};
         Availability,
         CreateGoalRequest,
         UpdateGoalRequest,
+        UpdateBookRequest,
+        RedecomposeGoalRequest,
         GoalResponse,
         BookResponse,
         CreateStepRequest,
         UpdateStepRequest,
         CreateActivityRequest,
         CompleteActivityRequest,
+        FeedbackRequest,
         StepResponse,
         ActivityResponse,
         BookPlanResponse,

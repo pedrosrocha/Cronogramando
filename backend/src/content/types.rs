@@ -38,6 +38,7 @@ impl SourceCategory {
     pub fn connectors(self) -> &'static [ConnectorKind] {
         match self {
             SourceCategory::Manual => &[
+                ConnectorKind::Searxng,
                 ConnectorKind::Youtube,
                 ConnectorKind::InternetArchive,
                 ConnectorKind::Wikipedia,
@@ -45,27 +46,33 @@ impl SourceCategory {
             SourceCategory::Stem => &[
                 ConnectorKind::Arxiv,
                 ConnectorKind::OpenAlex,
+                ConnectorKind::Searxng,
                 ConnectorKind::Wikipedia,
                 ConnectorKind::Youtube,
             ],
             SourceCategory::Business => &[
+                ConnectorKind::Searxng,
                 ConnectorKind::Youtube,
                 ConnectorKind::OpenAlex,
                 ConnectorKind::Doaj,
                 ConnectorKind::Wikipedia,
             ],
             SourceCategory::Humanities => &[
-                ConnectorKind::Gutenberg,
+                ConnectorKind::Searxng,
+                ConnectorKind::Wikipedia,
+                ConnectorKind::Youtube,
                 ConnectorKind::Doaj,
                 ConnectorKind::OpenAlex,
-                ConnectorKind::Wikipedia,
+                ConnectorKind::Gutenberg,
             ],
             SourceCategory::Arts => &[
+                ConnectorKind::Searxng,
                 ConnectorKind::Youtube,
                 ConnectorKind::Wikipedia,
                 ConnectorKind::InternetArchive,
             ],
             SourceCategory::Health => &[
+                ConnectorKind::Searxng,
                 ConnectorKind::Youtube,
                 ConnectorKind::OpenAlex,
                 ConnectorKind::Wikipedia,
@@ -98,6 +105,7 @@ impl std::str::FromStr for SourceCategory {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ConnectorKind {
+    Searxng,
     Youtube,
     Wikipedia,
     InternetArchive,
@@ -112,6 +120,7 @@ pub enum ConnectorKind {
 impl ConnectorKind {
     pub fn as_str(self) -> &'static str {
         match self {
+            ConnectorKind::Searxng => "searxng",
             ConnectorKind::Youtube => "youtube",
             ConnectorKind::Wikipedia => "wikipedia",
             ConnectorKind::InternetArchive => "internet_archive",
@@ -145,19 +154,46 @@ pub struct ResourceCandidate {
     pub language: String,
     pub activity_type: String,
     pub category: SourceCategory,
+    /// Snippet/description supplied by the connector.
+    pub description: Option<String>,
+    /// Bounded readable excerpt used by the relevance judge.
+    pub excerpt: Option<String>,
+    pub duration_secs: Option<u32>,
+    pub page_count: Option<u32>,
+    pub score: i32,
 }
 
 #[derive(Debug, Clone)]
 pub struct ResolveRequest {
-    pub query: String,
+    pub goal_outcome: String,
+    pub module_title: String,
+    pub module_objective: String,
+    pub module_scope_in: Vec<String>,
+    pub module_scope_out: Vec<String>,
+    pub step_title: String,
+    pub step_outcome: String,
+    pub success_criteria: String,
+    pub content_intent: String,
+    pub activity_type: String,
+    pub estimated_duration_mins: i32,
     pub language: String,
+}
+
+#[derive(Debug, Clone)]
+pub struct LessonDraft {
+    pub title: String,
+    pub content_body: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct ResolvedResource {
     pub category: SourceCategory,
     pub candidates: Vec<ResourceCandidate>,
+    pub lesson: Option<LessonDraft>,
     pub used_fallback: bool,
+    pub quality_status: String,
+    pub selection_reason: String,
+    pub trace: serde_json::Value,
 }
 
 impl ResolvedResource {
@@ -165,6 +201,10 @@ impl ResolvedResource {
         Self {
             category,
             used_fallback: true,
+            quality_status: "fallback".to_string(),
+            selection_reason: "no verified resource".to_string(),
+            trace: serde_json::json!({ "reason": "generic_task" }),
+            lesson: None,
             candidates: vec![ResourceCandidate {
                 title: title.to_string(),
                 url: None,
@@ -173,6 +213,11 @@ impl ResolvedResource {
                 language: language.to_string(),
                 activity_type: "task".to_string(),
                 category,
+                description: None,
+                excerpt: None,
+                duration_secs: None,
+                page_count: None,
+                score: 0,
             }],
         }
     }
@@ -181,6 +226,9 @@ impl ResolvedResource {
 #[async_trait]
 pub trait ContentResolver: Send + Sync {
     async fn resolve(&self, req: &ResolveRequest) -> ResolvedResource;
+
+    /// Generate a short lesson for a step that has no suitable resource.
+    async fn lesson(&self, req: &ResolveRequest) -> Option<LessonDraft>;
 }
 
 #[cfg(test)]

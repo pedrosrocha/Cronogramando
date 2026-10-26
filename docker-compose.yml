@@ -19,6 +19,9 @@ services:
     environment:
       DATABASE_URL: ${DATABASE_URL}
       PDF_SERVICE_URL: http://pdf-service:8001
+      SEARXNG_URL: ${SEARXNG_URL:-http://host.docker.internal:8082}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8000:8000"
     depends_on:

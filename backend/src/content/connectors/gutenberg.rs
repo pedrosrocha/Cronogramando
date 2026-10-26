@@ -10,9 +10,14 @@ pub async fn search(
     query: &ConnectorQuery,
     category: SourceCategory,
 ) -> Result<Vec<ResourceCandidate>> {
+    let language = if is_language_pt(&query.language) {
+        "pt"
+    } else {
+        "en"
+    };
     let url = Url::parse_with_params(
         "https://gutendex.com/books",
-        &[("search", query.query.trim())],
+        &[("search", query.query.trim()), ("languages", language)],
     )?;
 
     let response: Value = client
@@ -22,17 +27,21 @@ pub async fn search(
         .error_for_status()?
         .json()
         .await?;
-    Ok(parse_response(&response, category))
+    Ok(parse_response(&response, category, query.limit))
 }
 
-fn parse_response(response: &Value, category: SourceCategory) -> Vec<ResourceCandidate> {
+fn parse_response(
+    response: &Value,
+    category: SourceCategory,
+    limit: usize,
+) -> Vec<ResourceCandidate> {
     let Some(results) = response.get("results").and_then(Value::as_array) else {
         return Vec::new();
     };
 
     results
         .iter()
-        .take(10)
+        .take(limit.max(1))
         .filter_map(|book| {
             let title = book
                 .get("title")
@@ -66,6 +75,11 @@ fn parse_response(response: &Value, category: SourceCategory) -> Vec<ResourceCan
                 language,
                 activity_type: activity_type.to_string(),
                 category,
+                description: None,
+                excerpt: None,
+                duration_secs: None,
+                page_count: None,
+                score: 0,
             })
         })
         .collect()
@@ -96,7 +110,7 @@ mod tests {
             ]}"#,
         )
         .unwrap();
-        let candidates = parse_response(&response, SourceCategory::Humanities);
+        let candidates = parse_response(&response, SourceCategory::Humanities, 5);
         assert_eq!(candidates.len(), 2);
         assert_eq!(candidates[0].activity_type, "pdf");
         assert_eq!(
@@ -112,7 +126,7 @@ mod tests {
         let response: Value =
             serde_json::from_str(r#"{"results":[{"id":33,"title":"Poems","languages":["en"]}]}"#)
                 .unwrap();
-        let candidates = parse_response(&response, SourceCategory::Arts);
+        let candidates = parse_response(&response, SourceCategory::Arts, 5);
         assert_eq!(
             candidates[0].url.as_deref(),
             Some("https://www.gutenberg.org/ebooks/33")

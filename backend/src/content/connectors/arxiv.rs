@@ -11,7 +11,18 @@ pub async fn search(
     category: SourceCategory,
 ) -> Result<Vec<ResourceCandidate>> {
     let limit = query.limit.to_string();
-    let search = format!("all:\"{}\"", query.query.trim());
+    let terms: Vec<String> = query
+        .query
+        .split_whitespace()
+        .map(str::trim)
+        .filter(|token| !token.is_empty())
+        .map(|token| format!("all:{token}"))
+        .collect();
+    let search = if terms.is_empty() {
+        format!("all:\"{}\"", query.query.trim())
+    } else {
+        terms.join(" AND ")
+    };
     let url = Url::parse_with_params(
         "https://export.arxiv.org/api/query",
         &[
@@ -35,6 +46,7 @@ fn parse_response(body: &str, category: SourceCategory) -> Vec<ResourceCandidate
     let entry_re = Regex::new(r"(?s)<entry>(.*?)</entry>").expect("valid entry regex");
     let title_re = Regex::new(r"(?s)<title>(.*?)</title>").expect("valid title regex");
     let id_re = Regex::new(r"(?s)<id>(.*?)</id>").expect("valid id regex");
+    let summary_re = Regex::new(r"(?s)<summary>(.*?)</summary>").expect("valid summary regex");
 
     entry_re
         .captures_iter(body)
@@ -53,6 +65,12 @@ fn parse_response(body: &str, category: SourceCategory) -> Vec<ResourceCandidate
                 return None;
             }
 
+            let description = summary_re
+                .captures(entry)
+                .and_then(|capture| capture.get(1))
+                .map(|value| clean_text(value.as_str()))
+                .filter(|text| !text.is_empty());
+
             Some(ResourceCandidate {
                 title,
                 url: Some(id),
@@ -61,6 +79,11 @@ fn parse_response(body: &str, category: SourceCategory) -> Vec<ResourceCandidate
                 language: "en".to_string(),
                 activity_type: "pdf".to_string(),
                 category,
+                description,
+                excerpt: None,
+                duration_secs: None,
+                page_count: None,
+                score: 0,
             })
         })
         .collect()

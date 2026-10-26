@@ -33,8 +33,8 @@ const SLOT_SELECT: &str = "SELECT ss.id, ss.step_id, s.title AS step_title, \
      JOIN books b ON b.id = s.book_id \
      JOIN goals g ON g.id = b.goal_id";
 
-const GOAL_SELECT: &str = "SELECT id, user_id, title, why_statement, deadline, \
-     target_deadline, availability, created_at, updated_at FROM goals WHERE id = $1";
+const GOAL_SELECT: &str = "SELECT id, user_id, title, why_statement, outcome, success_criteria, \
+     deadline, target_deadline, availability, created_at, updated_at FROM goals WHERE id = $1";
 
 const MAX_RANGE_DAYS: i64 = 366;
 

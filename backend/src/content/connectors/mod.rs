@@ -7,6 +7,7 @@ mod doaj;
 mod gutenberg;
 mod internet_archive;
 mod openalex;
+pub mod searxng;
 mod wikipedia;
 mod youtube;
 
@@ -18,6 +19,7 @@ pub async fn search(
     youtube_api_key: Option<&str>,
 ) -> Result<Vec<ResourceCandidate>> {
     match kind {
+        ConnectorKind::Searxng => Ok(Vec::new()),
         ConnectorKind::Youtube => youtube::search(client, query, category, youtube_api_key).await,
         ConnectorKind::Wikipedia => wikipedia::search(client, query, category).await,
         ConnectorKind::InternetArchive => internet_archive::search(client, query, category).await,

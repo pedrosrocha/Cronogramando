@@ -75,7 +75,14 @@ async fn main() -> anyhow::Result<()> {
                 .delete(routes::goals::delete_goal),
         )
         .route("/goals/:id/books", get(routes::goals::list_goal_books))
-        .route("/books/:id", get(routes::goals::get_book))
+        .route(
+            "/goals/:id/redecompose",
+            post(routes::goals::redecompose_goal),
+        )
+        .route(
+            "/books/:id",
+            get(routes::goals::get_book).patch(routes::goals::update_book),
+        )
         .route(
             "/books/:id/complete",
             post(routes::reconciliation::complete_book),
@@ -99,9 +106,19 @@ async fn main() -> anyhow::Result<()> {
             post(routes::plan::regenerate_resource),
         )
         .route(
+            "/steps/:id/generate-lesson",
+            post(routes::plan::generate_lesson),
+        )
+        .route("/activities/:id", get(routes::plan::get_activity))
+        .route(
             "/activities/:id/complete",
             patch(routes::plan::complete_activity),
         )
+        .route(
+            "/activities/:id/feedback",
+            post(routes::plan::activity_feedback),
+        )
+        .route("/activities/:id/trace", get(routes::plan::activity_trace))
         .route("/activities/:id/content", get(routes::pdf::get_content))
         .route(
             "/activities/:id/translation",

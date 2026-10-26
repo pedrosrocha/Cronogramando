@@ -214,6 +214,11 @@ pub fn fallback_candidates(category: SourceCategory, language: &str) -> Vec<Reso
             language: r.language.to_string(),
             activity_type: r.activity_type.to_string(),
             category,
+            description: None,
+            excerpt: None,
+            duration_secs: None,
+            page_count: None,
+            score: 0,
         })
         .collect()
 }

@@ -53,6 +53,12 @@ fn parse_response(response: &Value, category: SourceCategory) -> Vec<ResourceCan
                 .and_then(Value::as_str)
                 .map(str::to_string);
             let language = language_from_bibjson(bibjson);
+            let description = bibjson
+                .get("abstract")
+                .and_then(Value::as_str)
+                .map(str::trim)
+                .filter(|text| !text.is_empty())
+                .map(str::to_string);
 
             Some(ResourceCandidate {
                 title: title.to_string(),
@@ -62,6 +68,11 @@ fn parse_response(response: &Value, category: SourceCategory) -> Vec<ResourceCan
                 language,
                 activity_type: "article".to_string(),
                 category,
+                description,
+                excerpt: None,
+                duration_secs: None,
+                page_count: None,
+                score: 0,
             })
         })
         .collect()

@@ -23,7 +23,7 @@ impl QuotaTracker {
              ON CONFLICT (connector, usage_date) DO UPDATE \
              SET units = connector_usage.units + EXCLUDED.units, updated_at = now() \
              WHERE connector_usage.units + EXCLUDED.units <= $2 \
-             RETURNING units",
+             RETURNING units::BIGINT",
         )
         .bind(YOUTUBE_SEARCH_UNITS)
         .bind(self.youtube_daily_units)

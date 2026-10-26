@@ -1,13 +1,14 @@
 use std::ops::Range;
 
-use anyhow::{bail, Context, Result};
+use anyhow::{bail, Result};
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde_json::json;
 
 use crate::config::Config;
 
+use super::client::{ChatMessage, LlmClient};
+
 const SEGMENT_SEPARATOR: &str = "<<<SEG>>>";
-const DEFAULT_NIM_MODEL: &str = "meta/llama-3.1-8b-instruct";
 
 /// Translate a batch of independent text segments. The caller batches text
 /// blocks so one PDF view does not fire hundreds of completion requests.
@@ -40,69 +41,22 @@ impl Translator for MockTranslator {
     }
 }
 
-pub struct NimTranslator {
-    client: reqwest::Client,
-    api_key: String,
-    model: String,
-    base_url: String,
+pub struct LlmTranslator {
+    client: LlmClient,
 }
 
-impl NimTranslator {
+impl LlmTranslator {
     pub fn new(cfg: &Config) -> Result<Self> {
-        let api_key = cfg
-            .nim_api_key
-            .clone()
-            .filter(|key| !key.trim().is_empty())
-            .context("NIM_API_KEY is not configured")?;
-        let model = cfg
-            .nim_model
-            .clone()
-            .filter(|model| !model.trim().is_empty())
-            .unwrap_or_else(|| DEFAULT_NIM_MODEL.to_string());
-
         Ok(Self {
-            client: reqwest::Client::builder()
-                .timeout(std::time::Duration::from_secs(cfg.nim_timeout_secs))
-                .build()?,
-            api_key,
-            model,
-            base_url: cfg.nim_base_url.trim_end_matches('/').to_string(),
+            client: LlmClient::new(&cfg.llm_translator)?,
         })
     }
 }
 
-#[derive(Serialize)]
-struct ChatRequest<'a> {
-    model: &'a str,
-    messages: Vec<ChatMessage<'a>>,
-    temperature: f32,
-}
-
-#[derive(Serialize)]
-struct ChatMessage<'a> {
-    role: &'a str,
-    content: String,
-}
-
-#[derive(Deserialize)]
-struct ChatResponse {
-    choices: Vec<ChatChoice>,
-}
-
-#[derive(Deserialize)]
-struct ChatChoice {
-    message: ChatContent,
-}
-
-#[derive(Deserialize)]
-struct ChatContent {
-    content: String,
-}
-
 #[async_trait]
-impl Translator for NimTranslator {
+impl Translator for LlmTranslator {
     fn provider_name(&self) -> String {
-        format!("nim:{}", self.model)
+        self.client.provider_name()
     }
 
     async fn translate_batch(
@@ -124,46 +78,22 @@ impl Translator for NimTranslator {
              exactly. Return only the translated segments, separated by the exact token \
              {SEGMENT_SEPARATOR} with no commentary."
         );
-        let request = ChatRequest {
-            model: &self.model,
-            messages: vec![
-                ChatMessage {
-                    role: "system",
-                    content: system,
-                },
-                ChatMessage {
-                    role: "user",
-                    content: texts.join(&format!("\n{SEGMENT_SEPARATOR}\n")),
-                },
-            ],
-            temperature: 0.0,
-        };
+        let user = texts.join(&format!("\n{SEGMENT_SEPARATOR}\n"));
 
-        let response = self
+        let source_chars: usize = texts.iter().map(|text| text.chars().count()).sum();
+        let max_tokens = ((source_chars / 3) as u32 + 512).clamp(1024, 16_000);
+
+        let reasoning = json!({ "enabled": false });
+        let content = self
             .client
-            .post(format!("{}/chat/completions", self.base_url))
-            .bearer_auth(&self.api_key)
-            .json(&request)
-            .send()
-            .await
-            .context("translation provider is unreachable")?;
-
-        let status = response.status();
-        if !status.is_success() {
-            let body = response.text().await.unwrap_or_default();
-            bail!("translation provider returned {status}: {body}");
-        }
-
-        let response: ChatResponse = response
-            .json()
-            .await
-            .context("translation provider returned an invalid payload")?;
-        let content = response
-            .choices
-            .into_iter()
-            .next()
-            .map(|choice| choice.message.content)
-            .context("translation provider returned no choices")?;
+            .chat(
+                &[ChatMessage::system(system), ChatMessage::user(user)],
+                0.0,
+                Some(max_tokens),
+                None,
+                Some(&reasoning),
+            )
+            .await?;
 
         let translated: Vec<String> = content
             .split(SEGMENT_SEPARATOR)

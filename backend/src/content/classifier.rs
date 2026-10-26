@@ -160,6 +160,17 @@ const KEYWORDS: &[CategoryKeywords] = &[
             "idioma",
             "writing",
             "escrita",
+            "redacao",
+            "redator",
+            "enem",
+            "vestibular",
+            "concurso",
+            "argumentacao",
+            "argumentativo",
+            "dissertacao",
+            "tese",
+            "prova",
+            "exame",
             "essay",
             "ethics",
             "etica",
@@ -249,7 +260,7 @@ const KEYWORDS: &[CategoryKeywords] = &[
     },
 ];
 
-fn normalize(text: &str) -> String {
+pub(crate) fn normalize(text: &str) -> String {
     text.to_lowercase()
         .chars()
         .map(|c| match c {
@@ -362,6 +373,14 @@ mod tests {
         );
         assert_eq!(
             primary("Filosofia política moderna"),
+            SourceCategory::Humanities
+        );
+        assert_eq!(
+            primary("Introdução à Redação do ENEM"),
+            SourceCategory::Humanities
+        );
+        assert_eq!(
+            primary("Como formular uma tese para o vestibular"),
             SourceCategory::Humanities
         );
     }

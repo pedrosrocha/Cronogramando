@@ -514,3 +514,32 @@ def _overlap_ratio(
 
 def _normalize(text: str) -> str:
     return " ".join(text.split())
+
+
+def probe_pdf(data: bytes, max_pages: int = 2) -> dict[str, Any]:
+    """Return page count and a short text-layer probe without full extraction."""
+
+    if len(data) > MAX_PDF_BYTES:
+        raise ValueError(f"PDF exceeds the {MAX_PDF_BYTES} byte limit")
+    if not data.startswith(b"%PDF"):
+        raise ValueError("uploaded data is not a PDF")
+
+    fitz = _import_fitz()
+    document = fitz.open(stream=data, filetype="pdf")
+    try:
+        if document.page_count == 0:
+            raise ValueError("PDF has no pages")
+        pages = max(1, min(int(max_pages), document.page_count))
+        parts: list[str] = []
+        for page_index in range(pages):
+            page = document.load_page(page_index)
+            parts.append(page.get_text("text") or "")
+        text = " ".join(" ".join(parts).split())
+        return {
+            "page_count": document.page_count,
+            "text_chars": len(text),
+            "has_text_layer": len(text) >= 100,
+            "excerpt": text[:1500],
+        }
+    finally:
+        document.close()

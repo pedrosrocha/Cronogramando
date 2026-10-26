@@ -32,3 +32,10 @@ Goal CRUD + one-shot LLM decomposition into books (mocked NIM for now).
 - Verified end-to-end: narrow goal → 1 book, broad goal → 4 ordered books
   (statuses unlocked/locked…), list/get/books/get-book/patch 200, delete 204,
   subsequent get 404, past deadline 400, unauthenticated 401.
+
+## Follow-up
+
+Book decomposition is redefined as measurable module objectives in
+[`02b-objective-decomposition.md`](02b-objective-decomposition.md). That phase
+adds `goals.outcome`, `books.objective/scope/assessment`, and the new
+decomposer contract.

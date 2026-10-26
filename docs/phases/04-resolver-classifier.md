@@ -40,3 +40,42 @@ Route each step to the right free connectors; YouTube + Wikipedia as universal f
   `Study:`, `Practice:`, `Spaced review of earlier material in`) before querying.
 - Unit tests cover classifier labels, language helpers, every fallback category,
   PT preference, connector parsing, and quota-safe behavior (33 tests green).
+
+## Redo — content quality (2026-10-25)
+
+The first live plan (goal "como fazer uma redação do ENEM") exposed four
+quality failures: YouTube never executed, Internet Archive returned long
+foreign books unrelated to the step, Wikipedia's top hit was unrelated
+(`Anatocismo` for a rubric step), and neither length nor language was ever
+checked. The resolver now ranks candidates instead of taking the first result.
+
+Decisions:
+
+- pt-BR is preferred; English is allowed only as a fallback and keeps its badge.
+- Selection is deterministic: hard language/length filters plus title-overlap
+  and connector-trust scoring. No LLM in the resolution path.
+- STEM/Business/Health keep academic-first connector order. Humanities and
+  Manual/Arts lead with short-form sources (Wikipedia/YouTube); Gutenberg is
+  demoted to a last resort.
+
+- [x] YouTube quota decode fixed (`units` is `INT4`; query casts to `BIGINT`),
+      so searches actually run instead of silently skipping the connector
+- [x] Keyword query builder: planner prefixes, PT/EN stopwords and instruction
+      verbs stripped; step keywords first, book context appended, max 8 tokens
+- [x] Deterministic ranking: language lock, plural/stem-aware title overlap,
+      connector trust, positional token weight; zero-overlap hits are dropped
+- [x] Wikipedia: 3,500-word cap, disambiguation filter, `OR` fallback when the
+      strict query returns nothing
+- [x] YouTube: embeddable + relevance search, `videos.list` details, 45s–20min
+      window, live streams rejected, declared audio language used when present
+- [x] Internet Archive: title-only fielded query, PT/EN language filter,
+      `imagecount` ≤ 40, only direct `_text.pdf` downloads (never `/details/`)
+- [x] Classifier learns ENEM/vestibular/redação/argumentação/tese vocabulary
+- [x] `ResolveRequest` now carries `topic` + `step`; query building lives in
+      `content::query`, scoring in `content::rank`
+
+## Follow-up
+
+The remaining quality work — body-level verification, length/digitization
+gates, an LLM curator, a micro-lesson fallback and user feedback — is planned
+in [`04b-content-curation.md`](04b-content-curation.md).

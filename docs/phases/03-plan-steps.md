@@ -39,3 +39,9 @@ Per-book detailed plan with editable steps (placeholder resources OK).
   in_progress), re-generate 409, get plan 200, create step 201, patch
   reorder→0 200, regenerate resource 200 (video→pdf), complete activity 200,
   delete 204 + renumbered, bad activity_kind 400.
+
+## Follow-up
+
+Step generation must consume the module objective and emit a learning outcome
+and success criteria per step. See
+[`02b-objective-decomposition.md`](02b-objective-decomposition.md).
