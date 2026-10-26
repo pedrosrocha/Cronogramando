@@ -39,5 +39,23 @@ jobs:
         working-directory: backend
         run: cargo check --locked
 
-  # Placeholder job — enabled once the Flutter toolchain lands in CI.
-  # mobile-analyze: see docs/phases/00-project-setup.md
+  mobile-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - name: pub get
+        working-directory: mobile
+        run: flutter pub get
+      - name: analyze
+        working-directory: mobile
+        run: flutter analyze
+      - name: widget tests
+        working-directory: mobile
+        run: flutter test
+      - name: web build
+        working-directory: mobile
+        run: flutter build web --release

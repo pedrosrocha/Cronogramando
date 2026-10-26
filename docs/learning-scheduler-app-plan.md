@@ -62,24 +62,29 @@ Services:
 - `users` — id, email, password_hash, role (`user`/`admin`), preferred_language
 - `goals` — id, user_id, title, why_statement (optional emotional driver),
   deadline (original), target_deadline (mutable), availability (days/time)
-- `books` — id, goal_id, order_index, title, description, status
+- `books` — id, goal_id, order_index, title, description, objective,
+  scope_in/scope_out, prerequisites, assessment, status
   (`locked|unlocked|in_progress|completed`), planned_duration, min_duration
   (LLM-estimated compression floor), actual_duration
-- `steps` — id, book_id, order, title, activity_kind
-  (`resource|quiz|task`), estimated_duration, references_step_id (for
-  spaced-repetition review steps pointing back at earlier material)
+- `steps` — id, book_id, order, title, learning_outcome, success_criteria,
+  content_intent (`explanation|worked_example|practice|assessment|review`),
+  activity_kind (`resource|quiz|task`), estimated_duration, references_step_id
+  (for spaced-repetition review steps pointing back at earlier material)
 - `activities` — id, step_id, type (video/podcast/pdf/article/quiz/task),
   resource_url/embed_id, source_connector, language, completed (bool)
 - `schedule_slots` — id, step_id, date, time_range
 
 ## 6. LLM Pipeline (two stages)
 
-1. **Decomposition (once, at goal creation)** — LLM produces just the
-   "table of contents": ordered books with title/description/estimated
-   relative weight. No steps or resources yet.
-2. **Detailed scheduling (per book, on unlock)** — full pipeline runs using
-   the *current* remaining time and *current* user availability: plan
-   generator → activity-kind tagging → content resolver → scheduler.
+1. **Decomposition (once, at goal creation)** — LLM normalizes the goal into a
+   measurable outcome and produces ordered modules, each with a measurable
+   objective, scope in/out, prerequisites, assessment and relative weight. No
+   steps or resources yet. See
+   `docs/phases/02b-objective-decomposition.md`.
+2. **Detailed scheduling (per module, on unlock)** — full pipeline runs using
+   the *current* remaining time and *current* user availability: module
+   objective → plan generator → learning outcomes per step → activity-kind
+   tagging → content resolver → scheduler.
 
 Design principles borrowed from the "WINS" learning framework
 (why-powered goals, incremental progress, neural-friendly patterns,
@@ -211,7 +216,10 @@ Notes:
   migration/seed script at first boot. No admin UI required for v1 — just
   enforce the role on protected routes.
 
-## 14. Backend Routes (planned)
+## 14. Backend Routes (implemented)
+
+**Health**
+- `GET /health`
 
 **Auth**
 - `POST /auth/register`
@@ -229,10 +237,12 @@ Notes:
 - `GET /goals/:id`
 - `PATCH /goals/:id`
 - `DELETE /goals/:id`
+- `POST /goals/:id/redecompose` (blocked once any activity is completed)
 
 **Books**
 - `GET /goals/:id/books`
 - `GET /books/:id`
+- `PATCH /books/:id` (module objective/scope/assessment contract)
 - `POST /books/:id/complete`
 - `POST /books/:id/reconcile-deadline`
 - `POST /books/:id/generate-schedule`
@@ -243,7 +253,13 @@ Notes:
 - `PATCH /steps/:id`
 - `DELETE /steps/:id`
 - `POST /steps/:id/regenerate-resource`
+- `POST /steps/:id/generate-lesson` (on-demand LLM micro-lesson)
+- `GET /activities/:id`
 - `PATCH /activities/:id/complete`
+- `POST /activities/:id/feedback`
+- `GET /activities/:id/trace`
+- `GET /activities/:id/content` (reflowed PDF blocks + markdown)
+- `GET /activities/:id/translation` (cached translated text panel)
 
 **Schedule**
 - `GET /schedule?date=`
@@ -256,8 +272,14 @@ Notes:
   calls to NIM/YouTube/etc.), `argon2`, `jsonwebtoken`, **`utoipa` +
   `utoipa-swagger-ui`** for OpenAPI/Swagger docs generated from day one.
 - **PDF sidecar**: Python, PyMuPDF, pdfplumber, optionally GROBID.
-- **Mobile**: Flutter, `table_calendar`, `flutter_markdown`, a PDF viewer
-  package for the embedded fallback view.
+- **Mobile**: Flutter, `go_router` (routing), a state-management choice made in
+  Phase 09b, `flutter_localizations`, `flutter_secure_storage`, a local cache
+  (`drift`/`sqflite` or `shared_preferences`), a maintained Markdown renderer and
+  a PDF viewer.
+- **Mobile testing**: `flutter_test`, `integration_test`, optional `patrol`,
+  golden tests, `mocktail`/`mockito`, emulator CI and optional hosted device
+  farms. API contract automation reuses the Phase 08b client test plus
+  OpenAPI-driven checks.
 - **Database**: Postgres.
 - **LLM**: NVIDIA NIM free endpoints (prototype).
 - **Infra**: Docker + Docker Compose.
@@ -297,14 +319,30 @@ path-based triggers; Docker Compose sits naturally at the root.
    every endpoint (no design polish); the goal is to catch integration
    issues against a real mobile HTTP client before investing in UI. The
    backend is "done enough" once this round-trips cleanly.
-9. **Real mobile app** — onboarding, today view, calendar, roadmap/books
-   view, activity detail views (video/PDF toggle/quiz/task), i18n, streak
-   display, why-statement reminder, celebration on book completion.
-10. **Polish** — tests (scheduler, classifier, PDF extraction edge cases
-    are the highest-value ones), README + architecture diagram, demo.
+9. **Real mobile app (learning path)** — built in small checkpoints so the
+   framework, tools and QA practice are learned deliberately:
+   - **9a Flutter anatomy** — project structure, widget tree, layout
+     constraints, DevTools, hot reload, “hello world” and the first widget
+     test.
+   - **9b App shell** — routing, Material theming, responsive layouts,
+     pt-BR/en localization and a provisional component library.
+   - **9c API, state & storage** — repositories, auth/refresh tokens, async
+     state, secure token storage, SQLite/shared-preferences cache and
+     offline behaviour.
+   - **9d Devices, media & release** — Android emulator/device, iOS
+     simulator (macOS), video/PDF rendering, lifecycle, APK/AAB and release
+     builds.
+10. **Test automation, polish & demo** — prove quality and present it:
+    - **10a API + mobile test automation** — test pyramid, widget/golden/
+      integration tests, emulator CI, OpenAPI contract checks, live smoke,
+      test strategy and flaky-test policy.
+    - **10b Polish, device QA & demo** — accessibility, performance, crash
+      reporting, release hygiene, README/demo and retrospective.
 
-**Hard gate**: Phase 9 (real mobile app) does not start until Phase 8
-(validation client) passes end to end.
+**Design gate**: Phase 8a is a provisional wireframe, not a locked visual
+spec. Phase 9 may start before the final design exists; keep screens
+theme-driven and changeable, and record design decisions as they emerge.
+Phase 8b (backend contract) remains the hard gate for Phase 9.
 
 ## 18. Known Open Risks / Considerations
 

@@ -1,0 +1,11 @@
+{
+  "name": "Cronogramando",
+  "short_name": "Cronogramando",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#6750a4",
+  "description": "Cronogramando Phase 08b validation client",
+  "orientation": "portrait-primary",
+  "prefer_related_applications": false
+}

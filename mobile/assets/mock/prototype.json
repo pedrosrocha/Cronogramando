@@ -1,0 +1,267 @@
+{
+  "goal": {
+    "title": "Passar em Cálculo II",
+    "why": "Quero passar sem trancar o semestre e finalmente entender integrais.",
+    "deadline_days": 75,
+    "availability": {
+      "days": ["mon", "wed", "fri"],
+      "minutes_per_day": 60
+    },
+    "streak_days": 4
+  },
+  "books": [
+    {
+      "id": "book-limits",
+      "title": "Limites e derivadas",
+      "objective": "Resolver limites e derivadas com segurança antes de integrar.",
+      "status": "in_progress",
+      "steps": [
+        {
+          "id": "step-limits-quick",
+          "title": "Revisão rápida: o que é um limite?",
+          "outcome": "Explicar limite com um exemplo do dia a dia.",
+          "duration_mins": 8,
+          "activities": [
+            {
+              "id": "act-limits-quick-video",
+              "kind": "video",
+              "title": "Vídeo: limites em 8 minutos",
+              "duration_mins": 8,
+              "resource_url": "https://www.youtube.com/watch?v=mock-limits",
+              "description": "Uma introdução visual, sem jargão, para aquecer."
+            }
+          ]
+        },
+        {
+          "id": "step-limits-practice",
+          "title": "Limites laterais na prática",
+          "outcome": "Identificar quando um limite existe olhando os dois lados.",
+          "duration_mins": 25,
+          "activities": [
+            {
+              "id": "act-limits-pdf",
+              "kind": "pdf",
+              "title": "Leitura: limites laterais (2 páginas)",
+              "duration_mins": 25,
+              "resource_url": "https://example.org/calculo2/limites.pdf",
+              "description": "Trecho reflowado para leitura no celular.",
+              "pdf_text": "Um limite existe quando os limites laterais coincidem.\n\nExemplo: f(x) = |x| / x.\nÀ esquerda de zero, f(x) = -1;\nà direita, f(x) = 1.\nComo os lados não coincidem, o limite em x = 0 não existe.\n\nDica: desenhe sempre os dois lados antes de calcular."
+            }
+          ]
+        },
+        {
+          "id": "step-limits-quiz",
+          "title": "Quiz: propriedades de limites",
+          "outcome": "Aplicar soma, produto e quociente de limites.",
+          "duration_mins": 10,
+          "activities": [
+            {
+              "id": "act-limits-quiz",
+              "kind": "quiz",
+              "title": "Quiz: propriedades de limites",
+              "duration_mins": 10,
+              "quiz_question": "Se lim f(x) = 2 e lim g(x) = 3, quanto vale lim [f(x) + g(x)]?",
+              "quiz_options": ["2", "3", "5", "6"],
+              "quiz_answer_index": 2
+            }
+          ]
+        },
+        {
+          "id": "step-derivative-video",
+          "title": "Derivadas: regra da potência",
+          "outcome": "Derivar polinômios simples sem consultar a tabela.",
+          "duration_mins": 30,
+          "activities": [
+            {
+              "id": "act-derivative-video",
+              "kind": "video",
+              "title": "Vídeo: regra da potência passo a passo",
+              "duration_mins": 30,
+              "resource_url": "https://www.youtube.com/watch?v=mock-derivatives",
+              "description": "Do gráfico para a fórmula, com três exemplos resolvidos."
+            }
+          ]
+        },
+        {
+          "id": "step-chain-task",
+          "title": "Exercícios: regra da cadeia",
+          "outcome": "Resolver cinco derivadas compostas.",
+          "duration_mins": 25,
+          "activities": [
+            {
+              "id": "act-chain-task",
+              "kind": "task",
+              "title": "Tarefa: cinco derivadas no caderno",
+              "duration_mins": 25,
+              "task_checklist": [
+                "Derivar (3x + 5)^4",
+                "Derivar sen(x^2)",
+                "Derivar e^(2x)",
+                "Derivar (x^2 + 1)^3",
+                "Marcar as que precisaram de ajuda"
+              ]
+            }
+          ]
+        },
+        {
+          "id": "step-review-limits",
+          "title": "Revisão espaçada: limites e derivadas",
+          "outcome": "Recuperar os conceitos sem olhar as anotações.",
+          "duration_mins": 10,
+          "activities": [
+            {
+              "id": "act-review-quiz",
+              "kind": "quiz",
+              "title": "Quiz de revisão: 3 perguntas",
+              "duration_mins": 10,
+              "quiz_question": "Qual é a derivada de x^3?",
+              "quiz_options": ["x^2", "3x", "3x^2", "x^4 / 4"],
+              "quiz_answer_index": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "book-integrals",
+      "title": "Integrais e aplicações",
+      "objective": "Usar integrais para calcular áreas e resolver problemas reais.",
+      "status": "locked",
+      "steps": [
+        {
+          "id": "step-integral-video",
+          "title": "Integral definida como área",
+          "outcome": "Relacionar soma de retângulos e área sob a curva.",
+          "duration_mins": 20,
+          "activities": [
+            {
+              "id": "act-integral-video",
+              "kind": "video",
+              "title": "Vídeo: a área sob a curva",
+              "duration_mins": 20,
+              "resource_url": "https://www.youtube.com/watch?v=mock-integrals",
+              "description": "Uma animação mostra a soma de Riemann virando integral."
+            }
+          ]
+        },
+        {
+          "id": "step-ftc-pdf",
+          "title": "Teorema Fundamental do Cálculo",
+          "outcome": "Explicar por que derivada e integral são inversas.",
+          "duration_mins": 30,
+          "activities": [
+            {
+              "id": "act-ftc-pdf",
+              "kind": "pdf",
+              "title": "Leitura: o Teorema Fundamental",
+              "duration_mins": 30,
+              "resource_url": "https://example.org/calculo2/tfc.pdf",
+              "description": "Texto reflowado com a intuição antes da prova.",
+              "pdf_text": "O Teorema Fundamental do Cálculo conecta as duas ideias centrais do cálculo.\n\nSe F(x) é a área acumulada sob f de a até x, então F'(x) = f(x).\n\nConsequência prática: para calcular a integral definida, encontre uma primitiva e avalie nos extremos.\n\nExemplo: a integral de x de 0 a 2 é x²/2 avaliado de 0 a 2, ou seja, 2."
+            }
+          ]
+        },
+        {
+          "id": "step-integrals-quiz",
+          "title": "Quiz: técnicas de integração",
+          "outcome": "Escolher substituição ou integração por partes.",
+          "duration_mins": 12,
+          "activities": [
+            {
+              "id": "act-integrals-quiz",
+              "kind": "quiz",
+              "title": "Quiz: qual técnica usar?",
+              "duration_mins": 12,
+              "quiz_question": "Qual técnica é mais direta para ∫ 2x·cos(x²) dx?",
+              "quiz_options": ["Frações parciais", "Substituição u = x²", "Por partes", "Nenhuma"],
+              "quiz_answer_index": 1
+            }
+          ]
+        },
+        {
+          "id": "step-window-task",
+          "title": "Projeto: área de uma janela",
+          "outcome": "Modelar uma forma real com uma integral definida.",
+          "duration_mins": 40,
+          "activities": [
+            {
+              "id": "act-window-task",
+              "kind": "task",
+              "title": "Tarefa: medir e calcular",
+              "duration_mins": 40,
+              "task_checklist": [
+                "Escolher uma janela ou porta de casa",
+                "Medir a largura e a altura",
+                "Escrever a integral que representa a área",
+                "Calcular e comparar com a estimativa",
+                "Fotografar o rascunho"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "day_offset": 0,
+      "step_id": "step-limits-quick",
+      "start_minute": 480,
+      "end_minute": 488
+    },
+    {
+      "day_offset": 0,
+      "step_id": "step-limits-practice",
+      "start_minute": 540,
+      "end_minute": 565
+    },
+    {
+      "day_offset": 0,
+      "step_id": "step-limits-quiz",
+      "start_minute": 1140,
+      "end_minute": 1150
+    },
+    {
+      "day_offset": 1,
+      "step_id": "step-derivative-video",
+      "start_minute": 540,
+      "end_minute": 570
+    },
+    {
+      "day_offset": 1,
+      "step_id": "step-chain-task",
+      "start_minute": 1140,
+      "end_minute": 1165
+    },
+    {
+      "day_offset": 2,
+      "step_id": "step-review-limits",
+      "start_minute": 600,
+      "end_minute": 610
+    },
+    {
+      "day_offset": 2,
+      "step_id": "step-integral-video",
+      "start_minute": 1140,
+      "end_minute": 1160
+    },
+    {
+      "day_offset": 3,
+      "step_id": "step-ftc-pdf",
+      "start_minute": 540,
+      "end_minute": 570
+    },
+    {
+      "day_offset": 4,
+      "step_id": "step-integrals-quiz",
+      "start_minute": 600,
+      "end_minute": 612
+    },
+    {
+      "day_offset": 5,
+      "step_id": "step-window-task",
+      "start_minute": 900,
+      "end_minute": 940
+    }
+  ]
+}
