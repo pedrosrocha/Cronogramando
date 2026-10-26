@@ -329,15 +329,21 @@ path-based triggers; Docker Compose sits naturally at the root.
    - **9c API, state & storage** — repositories, auth/refresh tokens, async
      state, secure token storage, SQLite/shared-preferences cache and
      offline behaviour.
-   - **9d Devices, media & release** — Android emulator/device, iOS
-     simulator (macOS), video/PDF rendering, lifecycle, APK/AAB and release
-     builds.
+   - **9d Android devices, media & release** — Android emulator/device,
+     video/PDF rendering, lifecycle, APK/AAB and release builds. iOS is parked
+     with a documented future path.
 10. **Test automation, polish & demo** — prove quality and present it:
     - **10a API + mobile test automation** — test pyramid, widget/golden/
-      integration tests, emulator CI, OpenAPI contract checks, live smoke,
-      test strategy and flaky-test policy.
+      integration tests, Android emulator CI, OpenAPI contract checks, live
+      smoke, test strategy and flaky-test policy. iOS automation is deferred
+      until the iOS track resumes.
     - **10b Polish, device QA & demo** — accessibility, performance, crash
       reporting, release hygiene, README/demo and retrospective.
+
+**Platform focus**: the project is Android-first. The Windows PC is the primary
+Flutter/Android machine; the Mac is available for a later iOS track. The server
+runs the backend, database and CI, not the emulator. See
+`docs/mobile-device-matrix.md`.
 
 **Design gate**: Phase 8a is a provisional wireframe, not a locked visual
 spec. Phase 9 may start before the final design exists; keep screens

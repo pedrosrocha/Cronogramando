@@ -9,7 +9,7 @@ on the device — including credentials, cached schedules and offline behaviour.
   DTO ↔ model mapping, manual `fromJson` vs `json_serializable`/`freezed`.
 - **Environment configuration:** `--dart-define`, dev/staging/prod base URLs,
   web CORS, Android emulator host `10.0.2.2`, Android `usesCleartextTraffic`
-  for local HTTP, and iOS App Transport Security.
+  for local HTTP, and (when the iOS track resumes) iOS App Transport Security.
 - **Authentication lifecycle:** register/login, access + refresh tokens,
   attaching `Authorization`, refreshing once on 401, logout, session expiry and
   safe error messages.

@@ -28,6 +28,7 @@ cheap to restyle and to record decisions as they emerge.
 | 2026-10-26 | Keep state/theme replaceable; screens composable | Design is expected to change | 09b |
 | 2026-10-26 | Three-tab shell + pushed activity detail | Keeps “today” primary and detail focused | 09b |
 | 2026-10-26 | PT-BR default, English fallback | Primary audience is Brazilian | 09b |
+| 2026-10-26 | Android-first target; iOS parked | Windows PC is the primary Flutter machine; Mac available later | 09d / 10a |
 
 ## How to use this log
 - Add an entry when a design decision affects more than one screen.

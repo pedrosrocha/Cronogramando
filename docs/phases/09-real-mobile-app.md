@@ -8,6 +8,14 @@ local storage and the test seams.
 This phase is **not** a UI-polish sprint. The goal is a working app you can
 explain, run on a device and test at every layer.
 
+## Platform focus
+This project is **Android-first**:
+- Primary machine: the Windows PC with Flutter, Android Studio, an AVD and a
+  physical Android device when available.
+- Secondary: Flutter Web for fast layout/state checks.
+- Parked: iOS. A Mac is available, so the code stays portable and iOS can be
+  added later in 09d/10a, but it does not block any Phase 09 exit criterion.
+
 ## Design status
 - The Phase 08a prototype is a **provisional wireframe**, not a locked visual
   spec. There is no final-design gate.
@@ -27,19 +35,20 @@ checkpoint:
 | [09a — Flutter anatomy](09a-flutter-anatomy.md) | What is a Flutter app made of, and how do I run a “hello world”? |
 | [09b — App shell](09b-app-shell.md) | How do navigation, theming and i18n work? |
 | [09c — API, state & storage](09c-api-state-storage.md) | How does the app talk to the API and keep data on the phone? |
-| [09d — Devices, media & release](09d-devices-media.md) | How does it run on Android/iPhone, render media and ship a build? |
+| [09d — Android, media & release](09d-devices-media.md) | How does it run on Android, render media and ship a build? (iOS parked) |
 
 Phase 08b’s live client remains available as the “contract console” while the
 real app grows. Keep it behind a debug menu until Phase 10a replaces it with
 automated coverage.
 
 ## Exit criteria
-- [ ] The real app runs on Flutter Web and an Android emulator (iOS simulator
-      where macOS is available; otherwise the limitation is documented)
+- [ ] The real app runs on Flutter Web and an Android emulator
 - [ ] Onboarding → today → calendar → roadmap → activity detail works against
       the real backend for one seeded user
 - [ ] A session survives app restart and expired access tokens refresh cleanly
 - [ ] Data is cached locally and the app shows useful offline/error states
 - [ ] Each sub-phase has unit/widget/integration tests at the right level
 - [ ] You can explain the widget tree, layout constraints, state flow, API
-      layer, storage choice and device build process without hand-waving
+      layer, storage choice and Android build process without hand-waving
+- [ ] iOS is explicitly parked with the future path documented in
+      `docs/mobile-device-matrix.md` (not a blocker)

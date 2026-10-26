@@ -32,13 +32,14 @@ Full plan: `docs/learning-scheduler-app-plan.md`
 0. Project setup — 1. Auth + Swagger — 2. Goals & Books — 3. Plan/steps —
 4. Content resolver + classifier — 5. Scheduler — 6. Deadline reconciliation —
 7. PDF pipeline + translation — 8a. Flutter Web design prototype —
-8b. Validation client — 9. Real mobile app (learning path):
+8b. Validation client — 9. Real mobile app (Android-first learning path):
 9a Flutter anatomy → 9b app shell/navigation → 9c API/state/storage →
-9d devices/media/release — 10. Test automation & demo:
+9d Android devices/media/release — 10. Test automation & demo:
 10a API + mobile automation → 10b polish/device QA/demo.
 
 Phase 09 is deliberately split into small learning checkpoints. Phase 08a is a
 provisional wireframe, not a final-design gate; the design will evolve while
-the app is built.
+the app is built. Android is the primary target; iOS is parked with a documented
+future path in `docs/mobile-device-matrix.md`.
 
 Per-phase checklists: `docs/phases/` (lean: Goal + Tasks + Exit criteria).

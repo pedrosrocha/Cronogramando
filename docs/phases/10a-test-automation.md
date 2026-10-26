@@ -3,7 +3,7 @@
 ## Goal
 Build a test pyramid for the whole system and run it in CI: backend unit tests,
 API contract checks, Flutter unit/widget tests and real integration flows on an
-emulator.
+Android emulator. iOS automation is parked with Phase 09d.
 
 ## Learn
 - **Test pyramid for mobile:** what belongs in unit, widget, integration/E2E,
@@ -19,9 +19,9 @@ emulator.
   for exploratory work, seed/cleanup scripts, and contract-drift detection.
 - **Device automation:** Android emulator in CI
   (`reactivecircus/android-emulator-runner` + KVM), `flutter test integration_test`,
-  `adb`, iOS simulator via `xcrun simctl` on macOS runners, and hosted device
-  farms (Firebase Test Lab, BrowserStack, Sauce Labs) when local emulators are
-  insufficient.
+  `adb`, and hosted device farms (Firebase Test Lab, BrowserStack, Sauce Labs)
+  when local emulators are insufficient. iOS simulator automation via
+  `xcrun simctl` on macOS runners is deferred until the iOS track resumes.
 - **CI design:** path filters, dependency caching, JUnit/HTML reports,
   coverage, artifacts (screenshots, logs, APKs), timeouts, retries only for
   known-flaky infrastructure, and a quarantine policy.
